@@ -40,7 +40,7 @@ func generateDDLRoughly(s *schema.Schema) string {
 		if t.Type == "VIEW" {
 			continue
 		}
-		ddl += fmt.Sprintf("CREATE TABLE %s (", t.Name)
+		ddl += fmt.Sprintf("%s (", t.Name)
 		td := []string{}
 		for _, c := range t.Columns {
 			d := fmt.Sprintf("%s %s", c.Name, c.Type)
