@@ -55,20 +55,20 @@ func generateDDLRoughly(s *schema.Schema) string {
 			}
 			td = append(td, d)
 		}
-		// Try not to use indexes and constraints
+		// Try not to use indexes
 		// for _, i := range t.Indexes {
 		// 	d := i.Def
 		// 	td = append(td, d)
 		// }
-		// for _, c := range t.Constraints {
-		// 	switch c.Type {
-		// 	case "PRIMARY KEY", "UNIQUE KEY":
-		// 		continue
-		// 	default:
-		// 		d := fmt.Sprintf(" CONSTRAINT %s", c.Def)
-		// 		td = append(td, d)
-		// 	}
-		// }
+		for _, c := range t.Constraints {
+			switch c.Type {
+			case "PRIMARY KEY", "UNIQUE KEY":
+				continue
+			default:
+				d := fmt.Sprintf(" CONSTRAINT %s", c.Def)
+				td = append(td, d)
+			}
+		}
 		ddl += strings.Join(td, ",")
 		if t.Comment != "" {
 			ddl += fmt.Sprintf(") COMMENT = %q;\n", t.Comment)
