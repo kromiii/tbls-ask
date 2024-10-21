@@ -64,7 +64,7 @@ var rootCmd = &cobra.Command{
 		s, err := analyzer.AnalyzeSchema(schemaPath, includes, excludes, labels)
 
 		c, err := client.New(model, query)
-		a, err := c.Ask(q, s)
+		a, err := c.Ask(ctx, q, s)
 
 		if err != nil {
 			return err

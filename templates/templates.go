@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	DefaultPromtTmpl = `Answer the questions in the Question assuming the following DDL.
+	DefaultPromptTmpl = `Answer the questions in the Question assuming the following DDL.
 {{ .DatabaseVersion }}
 
 ## DDL ( Data Definition Language )

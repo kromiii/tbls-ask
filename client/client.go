@@ -1,11 +1,3 @@
-// llm.go
-// ほしい機能
-// 1. クライアントを作成する
-// OpenAI または Gemini のモデルを指定してクエリクライアントを作成する
-// 2. プロンプトを作成する
-// tbls schema の情報を使ってLLMに渡すプロンプトを作成する
-// 3. LLM に問い合わせる
-// 先ほど初期化したクライアントを使ってLLMに問い合わせる
 package client
 
 import (
@@ -16,10 +8,9 @@ import (
 	"text/template"
 
 	"github.com/k1LoW/repin"
-	"github.com/k1LoW/tbls/schema"
-	"github.com/k1LoW/tbls-ask/templates"
 	"github.com/k1LoW/tbls-ask/internal/openai"
-	"github.com/k1LoW/tbls-ask/internal/gemini"
+	"github.com/k1LoW/tbls-ask/templates"
+	"github.com/k1LoW/tbls/schema"
 )
 
 const (
@@ -28,41 +19,73 @@ const (
 	quoteEnd         = "```"
 )
 
-type LLMClient struct {
-	client *openai.OpenAIClient
-	model  string
+type Client struct {
+	chatClient  *openai.OpenAI
 	querymode bool
+	promptTmpl string
 }
 
-func NewLLMClient(model string, querymode bool) (*LLMClient, error) {
-	client, err := openai.NewOpenAIClient(model)
-	if err != nil {
-		return nil, err
+func New(model string, querymode bool) (*Client, error) {
+	var promptTmpl string
+	if querymode {
+		promptTmpl = templates.DefaultQueryPromptTmpl
+	} else {
+		promptTmpl = templates.DefaultPromptTmpl
 	}
-	return &LLMClient{
-		client: client,
-		model:  model,
+
+	c := openai.New(model)
+
+	return &Client{
+		chatClient:  c,
 		querymode: querymode,
+		promptTmpl: promptTmpl,
 	}, nil
 }
 
-func (a *LLMClient) GeneratePrompt(db *schema.Database) (string, error) {
-	tmpl, err := template.New("prompt").Parse(templates.PromptTemplate)
+func (c *Client) Ask(ctx context.Context, q string, s *schema.Schema) (string, error) {
+	p, err := c.GeneratePrompt(s, q)
 	if err != nil {
 		return "", err
 	}
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, db)
+	resp, err := c.chatClient.ChatCompletionRequest(ctx, p)
 	if err != nil {
+		return "", err
+	}
+	if c.querymode {
+		resp, err = extractQuery(resp)
+		if err != nil {
+			return "", err
+		}
+	}
+	return resp, nil
+}
+
+func (c *Client) GeneratePrompt(s *schema.Schema, q string) (string, error) {
+	tpl, err := template.New("").Parse(c.promptTmpl)
+	if err != nil {
+		return "", err
+	}
+	buf := new(bytes.Buffer)
+	if err := tpl.Execute(buf, map[string]any{
+		"DatabaseVersion": templates.DatabaseVersion(s),
+		"QuoteStart":      "```sql",
+		"QuoteEnd":        "```",
+		"DDL":             templates.GenerateDDLRoughly(s),
+		"Viewpoints":      templates.GenerateViewPoints(s),
+		"Question":        q,
+	}); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-func (a *LLMClient) Ask(ctx context.Context, prompt string) (string, error) {
-	resp, err := a.client.ChatCompletionRequest(prompt)
-	if err != nil {
-		return "", err
+func extractQuery(resp string) (string, error) {
+	if !strings.Contains(resp, quoteStart) {
+		return "", fmt.Errorf("failed to pick query from answer: %s", resp)
 	}
-	return resp, nil
+	query := new(bytes.Buffer)
+	if _, err := repin.Pick(strings.NewReader(resp), quoteStart, quoteEnd, true, query); err != nil {
+		return "", fmt.Errorf("failed to pick query from answer: %w\nanswer: %s", err, resp)
+	}
+	return query.String(), nil
 }
