@@ -62,10 +62,15 @@ var rootCmd = &cobra.Command{
         return fmt.Errorf("TBLS_SCHEMA environment variable is not set")
     }
 		s, err := analyzer.AnalyzeSchema(schemaPath, includes, excludes, labels)
+		if err != nil {
+			return err
+		}
 
-		c, err := client.New(model, query)
+		c, err := client.New[client.ChatClientType](ctx, model, query)
+		if err != nil {
+			return err
+		}
 		a, err := c.Ask(ctx, q, s)
-
 		if err != nil {
 			return err
 		}

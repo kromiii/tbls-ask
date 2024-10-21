@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/k1LoW/repin"
+	"github.com/k1LoW/tbls-ask/internal/gemini"
 	"github.com/k1LoW/tbls-ask/internal/openai"
 	"github.com/k1LoW/tbls-ask/templates"
 	"github.com/k1LoW/tbls/schema"
@@ -19,13 +20,20 @@ const (
 	quoteEnd         = "```"
 )
 
-type Client struct {
-	chatClient  *openai.OpenAI
-	querymode bool
-	promptTmpl string
+type ChatClientType interface {
+	ChatCompletionRequest(ctx context.Context, prompt string) (string, error)
 }
 
-func New(model string, querymode bool) (*Client, error) {
+type Client[T ChatClientType] struct {
+	chatClient  T
+	querymode   bool
+	promptTmpl  string
+}
+
+func New[T ChatClientType](ctx context.Context, model string, querymode bool) (*Client[T], error) {
+	if model == "" {
+		model = DefaultModelChat
+	}
 	var promptTmpl string
 	if querymode {
 		promptTmpl = templates.DefaultQueryPromptTmpl
@@ -33,16 +41,23 @@ func New(model string, querymode bool) (*Client, error) {
 		promptTmpl = templates.DefaultPromptTmpl
 	}
 
-	c := openai.New(model)
+	var c T
+	if strings.HasPrefix(model, "gpt") {
+			c = any(openai.New(model)).(T)
+	} else if strings.HasPrefix(model, "gemini") {
+			c = any(gemini.New(ctx, model)).(T)
+	} else {
+			return nil, fmt.Errorf("unsupported model: %s", model)
+	}
 
-	return &Client{
-		chatClient:  c,
-		querymode: querymode,
+	return &Client[T]{
+		chatClient: c,
+		querymode:  querymode,
 		promptTmpl: promptTmpl,
 	}, nil
 }
 
-func (c *Client) Ask(ctx context.Context, q string, s *schema.Schema) (string, error) {
+func (c *Client[T]) Ask(ctx context.Context, q string, s *schema.Schema) (string, error) {
 	p, err := c.GeneratePrompt(s, q)
 	if err != nil {
 		return "", err
@@ -60,7 +75,7 @@ func (c *Client) Ask(ctx context.Context, q string, s *schema.Schema) (string, e
 	return resp, nil
 }
 
-func (c *Client) GeneratePrompt(s *schema.Schema, q string) (string, error) {
+func (c *Client[T]) GeneratePrompt(s *schema.Schema, q string) (string, error) {
 	tpl, err := template.New("").Parse(c.promptTmpl)
 	if err != nil {
 		return "", err
