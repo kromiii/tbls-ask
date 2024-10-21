@@ -57,11 +57,11 @@ var rootCmd = &cobra.Command{
 		q := strings.Join(args, " ")
 
 		includes = lo.Uniq(append(includes, tables...)) // tables and includes are eqivalent
-		schemaPath := os.Getenv("TBLS_SCHEMA")
-    if schemaPath == "" {
-        return fmt.Errorf("TBLS_SCHEMA environment variable is not set")
+		strOrPath := os.Getenv("TBLS_SCHEMA")
+    if strOrPath == "" {
+        return fmt.Errorf("TBLS_SCHEMA is not set")
     }
-		s, err := analyzer.AnalyzeSchema(schemaPath, includes, excludes, labels)
+		s, err := analyzer.AnalyzeSchema(strOrPath, includes, excludes, labels)
 		if err != nil {
 			return err
 		}
