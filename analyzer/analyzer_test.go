@@ -16,7 +16,7 @@ func TestAnalayzeSchema(t *testing.T)	{
 		labels []string
 		want *schema.Schema
 		wantErr bool
-	} {
+	}{
 		{
 			name: "analyze string",
 			strOrPath: `{"name": "test", "tables": [{"name": "a", "comment": "table a", "columns": [{"name": "id", "type": "int"}]},{"name": "b", "comment": "table b", "columns": [{"name": "title", "type": "varchar"}]}]}`,

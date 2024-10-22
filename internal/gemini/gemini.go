@@ -14,7 +14,7 @@ type Gemini struct {
 	model           string
 }
 
-func New(ctx context.Context, model string) *Gemini {
+func NewClient(ctx context.Context, model string) *Gemini {
 	key := os.Getenv("GEMINI_API_KEY")
 	if key == "" {
 		return nil

@@ -12,7 +12,7 @@ type OpenAI struct {
 	model           string
 }
 
-func New(model string) *OpenAI {
+func NewClient(model string) *OpenAI {
 	key := os.Getenv("OPENAI_API_KEY")
 	if key == "" {
 		panic("OPENAI_API_KEY is not set")

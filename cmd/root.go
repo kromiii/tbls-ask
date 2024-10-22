@@ -31,6 +31,8 @@ import (
 
 	"github.com/k1LoW/tbls-ask/analyzer"
 	"github.com/k1LoW/tbls-ask/client"
+	"github.com/k1LoW/tbls-ask/internal/gemini"
+	"github.com/k1LoW/tbls-ask/internal/openai"
 	"github.com/k1LoW/tbls-ask/version"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -61,20 +63,36 @@ var rootCmd = &cobra.Command{
     if strOrPath == "" {
         return fmt.Errorf("TBLS_SCHEMA is not set")
     }
-		s, err := analyzer.AnalyzeSchema(strOrPath, includes, excludes, labels)
+		var a analyzer.Analyzer
+		err := a.AnalyzeSchema(strOrPath, includes, excludes, labels)
 		if err != nil {
 			return err
 		}
 
-		c, err := client.New[client.ChatClientType](ctx, model, query)
+		p, err := a.GeneratePrompt(q, query)
 		if err != nil {
 			return err
 		}
-		a, err := c.Ask(ctx, q, s)
+
+		var agent client.LLMAgent
+		if strings.HasPrefix(model, "gpt") {
+			agent = openai.NewClient(model)
+		} else if strings.HasPrefix(model, "gemini") {
+			agent = gemini.NewClient(ctx, model)
+		} else {
+				return fmt.Errorf("unsupported model: %s", model)
+		}
+
+		c := client.Client{
+			Agent: agent,
+			Querymode: query,
+		}
+
+		answer, err := c.Ask(ctx, p)
 		if err != nil {
 			return err
 		}
-		cmd.Println(a)
+		cmd.Println(answer)
 		return nil
 	},
 }
