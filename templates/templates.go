@@ -16,11 +16,13 @@ const (
 {{ .QuoteStart }}
 {{ .DDL }}
 {{ .QuoteEnd }}
+{{ if .ViewPoints }}
 
 ## ViewPoints (Sets of tables based on specific concerns)
 
 {{ .ViewPoints }}
 
+{{ end }}
 ## Question
 {{ .Question }}
 `
@@ -32,7 +34,13 @@ const (
 {{ .QuoteStart }}
 {{ .DDL }}
 {{ .QuoteEnd }}
+{{ if .ViewPoints }}
 
+## ViewPoints (Sets of tables based on specific concerns)
+
+{{ .ViewPoints }}
+
+{{ end }}
 ## Explanation of the query to be created
 {{ .Question }}
 `
