@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	DefaultModelChat = "gpt-4o"
 	quoteStart       = "```sql"
 	quoteEnd         = "```"
 )
@@ -43,8 +42,9 @@ func extractQuery(resp string) (string, error) {
 	if !strings.Contains(resp, quoteStart) {
 		return "", fmt.Errorf("failed to pick query from answer: %s", resp)
 	}
+	src := strings.NewReader(resp)
 	query := new(bytes.Buffer)
-	if _, err := repin.Pick(strings.NewReader(resp), quoteStart, quoteEnd, true, query); err != nil {
+	if _, err := repin.Pick(src, quoteStart, quoteEnd, true, query); err != nil {
 		return "", fmt.Errorf("failed to pick query from answer: %w\nanswer: %s", err, resp)
 	}
 	return query.String(), nil

@@ -60,9 +60,9 @@ var rootCmd = &cobra.Command{
 
 		includes = lo.Uniq(append(includes, tables...)) // tables and includes are eqivalent
 		strOrPath := os.Getenv("TBLS_SCHEMA")
-    if strOrPath == "" {
-        return fmt.Errorf("TBLS_SCHEMA is not set")
-    }
+		if strOrPath == "" {
+			return fmt.Errorf("TBLS_SCHEMA is not set")
+		}
 		var a analyzer.Analyzer
 		err := a.AnalyzeSchema(strOrPath, includes, excludes, labels)
 		if err != nil {
@@ -80,11 +80,11 @@ var rootCmd = &cobra.Command{
 		} else if strings.HasPrefix(model, "gemini") {
 			agent = gemini.NewClient(ctx, model)
 		} else {
-				return fmt.Errorf("unsupported model: %s", model)
+			return fmt.Errorf("unsupported model: %s", model)
 		}
 
 		c := client.Client{
-			Agent: agent,
+			Agent:     agent,
 			Querymode: query,
 		}
 

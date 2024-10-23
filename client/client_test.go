@@ -3,44 +3,59 @@ package client
 import (
 	"context"
 	"testing"
+	"github.com/google/go-cmp/cmp"
 )
 
-type MockChatClient struct{
-	ChatCompletionRequest(ctx context.Context, prompt string) (string, error)
+type StubLLMAgent struct{}
+
+func (s *StubLLMAgent) ChatCompletionRequest(ctx context.Context, p string) (string, error) {
+	return `stub response
+` + "```sql" + `
+SELECT * FROM users;
+` + "```" + `
+`, nil
 }
 
-func TestNew(t *testing.T) {
+func TestAsk(t *testing.T) {
 	tests := []struct{
 		name string
-		model string
+		prompt string
 		querymode bool
-		want *Client[ChatClientType]
+		want string
 		wantErr bool
 	}{
 		{
-			name: "openai chat client",
-			model: "gpt-3.5-turbo",
+			name: "normal mode",
+			prompt: "Hello, how are you?",
 			querymode: false,
-			want: &Client[ChatClientType]{
-				chatClient: "gpt-3.5-turbo",
-				querymode: false,
-				promptTmpl: "",
-			},
+			want: `stub response
+` + "```sql" + `
+SELECT * FROM users;
+` + "```" + `
+`,
+			wantErr: false,
+		},
+		{
+			name: "query mode",
+			prompt: "select users",
+			querymode: true,
+			want: "SELECT * FROM users;",
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := New[ChatClientType](context.Background(), tt.model, tt.querymode)
+			c := &Client{
+				Agent: &StubLLMAgent{},
+				Querymode: tt.querymode,
+			}
+			got, err := c.Ask(context.Background(), tt.prompt)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("New() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Ask() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.chatClient != tt.want.chatClient {
-				t.Errorf("New() = %v, want %v", got.chatClient, tt.want.chatClient)
-			}
-			if got.querymode != tt.want.querymode {
-				t.Errorf("New() = %v, want %v", got.querymode, tt.want.querymode)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("Ask() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
