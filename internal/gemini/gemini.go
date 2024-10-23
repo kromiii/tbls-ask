@@ -14,20 +14,19 @@ type Gemini struct {
 	model           string
 }
 
-func NewClient(ctx context.Context, model string) *Gemini {
+func NewClient(ctx context.Context, model string) (*Gemini, error) {
 	key := os.Getenv("GEMINI_API_KEY")
 	if key == "" {
-		return nil
+		return nil, fmt.Errorf("GEMINI_API_KEY is not set")
 	}
 	client, err := genai.NewClient(ctx, option.WithAPIKey(key))
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	defer client.Close()
 	return &Gemini{
 		chatClient:          client,
 		model:           model,
-	}
+	}, nil
 }
 
 func (g *Gemini) ChatCompletionRequest(ctx context.Context, p string) (string, error) {

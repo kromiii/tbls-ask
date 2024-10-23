@@ -76,9 +76,15 @@ var rootCmd = &cobra.Command{
 
 		var agent client.LLMAgent
 		if strings.HasPrefix(model, "gpt") {
-			agent = openai.NewClient(model)
+			agent, err = openai.NewClient(model)
+			if err != nil {
+				return err
+			}
 		} else if strings.HasPrefix(model, "gemini") {
-			agent = gemini.NewClient(ctx, model)
+			agent, err = gemini.NewClient(ctx, model)
+			if err != nil {
+				return err
+			}
 		} else {
 			return fmt.Errorf("unsupported model: %s", model)
 		}

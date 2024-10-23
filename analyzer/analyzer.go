@@ -6,10 +6,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/k1LoW/tbls-ask/templates"
 	"github.com/k1LoW/tbls/config"
 	"github.com/k1LoW/tbls/datasource"
 	"github.com/k1LoW/tbls/schema"
-	"github.com/k1LoW/tbls-ask/templates"
 )
 
 type Analyzer struct {
@@ -19,8 +19,8 @@ type Analyzer struct {
 func (a *Analyzer) AnalyzeSchema(strOrPath string, includes []string, excludes []string, labels []string) error {
 	var s *schema.Schema
 	var err error
-	
-	if strings.HasPrefix(strOrPath, "{") {
+
+	if strings.HasPrefix(strOrPath, "{") || strings.HasPrefix(strOrPath, "/") {
 		s, err = datasource.AnalyzeJSONStringOrFile(strOrPath)
 	} else {
 		dsn := config.DSN{URL: strOrPath}

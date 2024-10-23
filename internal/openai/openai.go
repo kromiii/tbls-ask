@@ -2,25 +2,26 @@ package openai
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/sashabaranov/go-openai"
 )
 
 type OpenAI struct {
-	chatClient          *openai.Client
-	model           string
+	chatClient *openai.Client
+	model      string
 }
 
-func NewClient(model string) *OpenAI {
+func NewClient(model string) (*OpenAI, error) {
 	key := os.Getenv("OPENAI_API_KEY")
 	if key == "" {
-		panic("OPENAI_API_KEY is not set")
+		return nil, fmt.Errorf("OPENAI_API_KEY is not set")
 	}
 	return &OpenAI{
-		chatClient:          openai.NewClient(key),
-		model:           model,
-	}
+		chatClient: openai.NewClient(key),
+		model:      model,
+	}, nil
 }
 
 func (o *OpenAI) ChatCompletionRequest(ctx context.Context, p string) (string, error) {
