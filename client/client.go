@@ -42,6 +42,9 @@ func extractQuery(resp string) (string, error) {
 	if !strings.Contains(resp, quoteStart) {
 		return "", fmt.Errorf("failed to pick query from answer: %s", resp)
 	}
+	if !strings.HasSuffix(resp, "\n") {
+		resp += "\n"
+	}
 	src := strings.NewReader(resp)
 	query := new(bytes.Buffer)
 	if _, err := repin.Pick(src, quoteStart, quoteEnd, true, query); err != nil {
