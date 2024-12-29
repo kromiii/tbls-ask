@@ -45,3 +45,13 @@ Either OpenAI or Gemini API key is required.
 
 - `OPENAI_API_KEY` ... API Key of OpenAI.
 - `GEMINI_API_KEY` ... API Key of Gemini.
+
+Want to use Gemini on Vertex AI? 
+
+Please set the following environment variables.
+
+```
+export GOOGLE_APPLICATION_CREDENTIALS_JSON=$(cat [your-service-account-key.json])
+export GOOGLE_CLOUD_REGION=[your-region]
+```
+

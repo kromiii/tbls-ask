@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -17,7 +18,11 @@ func NewService(model string) (*Service, error) {
 	if strings.HasPrefix(model, "gpt") {
 		client, err = NewOpenAIClient(model)
 	} else if strings.HasPrefix(model, "gemini") {
-		client, err = NewGeminiClient(model)
+		if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON") != "" {
+			client, err = NewVertexAIClient(model)
+		} else {
+			client, err = NewGeminiClient(model)
+		}
 	} else {
 		return nil, fmt.Errorf("unsupported model: %s", model)
 	}
